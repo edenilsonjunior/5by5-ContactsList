@@ -2,18 +2,18 @@
 {
     internal class Telephone
     {
+        public int UserId { get; set; }
         public string Number { get; set; }
-        public Telephone? Next { get; set; }
-
-        public Telephone(string number)
+        
+        public Telephone(int userId, string number)
         {
+            UserId = userId;
             Number = number;
-            Next = null;
         }
 
         public override string? ToString()
         {
-            return $"Telephone.........: {Number}";
+            return $"{UserId};{Number}";
         }
     }
 }

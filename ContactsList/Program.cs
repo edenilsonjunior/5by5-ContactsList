@@ -1,4 +1,6 @@
-﻿using System.Runtime.Intrinsics.X86;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Intrinsics.X86;
 using System.Security.Cryptography;
 
 namespace ContactsList
@@ -7,11 +9,18 @@ namespace ContactsList
     {
         static void Main(string[] args)
         {
-            ContactList list = new ContactList();
+            string path = @"C:\DataContact\";
+            string fileContact = "contacts.csv";
+            string fileAddress = "address.csv";
+            string fileTelephone = "telephones.csv";
+            CreateDirectoryAndFiles(path, fileContact, fileAddress, fileTelephone);
+
+            List<Contact> list = LoadData(path, fileContact, fileAddress, fileTelephone);
 
             while (true)
             {
                 int option = Menu();
+                list.Sort(new CompareName());
 
                 switch (option)
                 {
@@ -25,7 +34,7 @@ namespace ContactsList
                         EditContact(list);
                         break;
                     case 4:
-                        list.Print();
+                        ListAllUsers(list);
                         break;
                     case 5:
                         ListContactByName(list);
@@ -38,6 +47,9 @@ namespace ContactsList
                         Console.WriteLine("Invalid option!");
                         break;
                 }
+                SaveData(list, path, fileContact, fileAddress, fileTelephone);
+
+                list.Sort(new CompareName());
                 Console.WriteLine("========================");
                 Console.Write("Press aky key to continue...");
                 Console.ReadKey();
@@ -69,7 +81,7 @@ namespace ContactsList
             return option;
         }
 
-        static void AddContact(ContactList list)
+        static void AddContact(List<Contact> list)
         {
             Console.Clear();
             Console.WriteLine("==Insert a new contact==");
@@ -79,52 +91,144 @@ namespace ContactsList
             Address address = CreateAddress();
 
             Contact aux = new(name, address, email);
+            address.UserId = aux.Id;
 
             int number = ReadInt("Enter how many telephones: ", "You must enter a number!");
             for (int i = 0; i < number; i++)
             {
                 string phone = ReadString($"Telephone {i + 1}: ");
-                aux.TelephoneList.Add(new Telephone(phone));
+                aux.TelephoneList.Add(new Telephone(aux.Id, phone));
             }
 
             list.Add(aux);
             Console.WriteLine("Contact added!");
         }
+        static List<Contact> LoadData(string path, string fileContact, string fileAddress, string fileTelephone)
+        {
+            List<Contact> list = new();
 
-        static void RemoveContact(ContactList list)
+            foreach (var line in File.ReadAllLines(path + fileContact))
+            {
+                string[] fields = line.Split(";");
+
+                int id = int.Parse(fields[0]);
+                string fullName = fields[1];
+                string email = fields[2];
+
+                Contact c = new(id, fullName, email);
+                list.Add(c);
+
+                // adding address to each contact
+                foreach (var lineAddress in File.ReadAllLines(path + fileAddress))
+                {
+                    string[] addressFields = lineAddress.Split(";");
+                    int userId = int.Parse(addressFields[0]);
+
+                    string postalCode = addressFields[1];
+                    string city = addressFields[2];
+                    string state = addressFields[3];
+                    string street = addressFields[4];
+                    string streetType = addressFields[5];
+                    string district = addressFields[6];
+                    int number = int.Parse(addressFields[7]);
+                    string additionalAddress = addressFields[8];
+
+                    if (c.Id == userId)
+                    {
+                        c.Address = new Address(userId, postalCode, city, state, street, streetType, district, number, additionalAddress);
+                        break;
+                    }
+                }
+                foreach (var linePhone in File.ReadAllLines(path + fileTelephone))
+                {
+                    string[] phoneFields = linePhone.Split(";");
+                    // return $"{UserId};{Number}";
+                    int userId = int.Parse(phoneFields[0]);
+                    string number = phoneFields[1];
+
+                    if (c.Id == userId)
+                    {
+                        c.TelephoneList.Add(new Telephone(userId, number));
+                    }
+                }
+            }
+            Contact.count = list.Count;
+            return list;
+        }
+        static void SaveData(List<Contact> list, string path, string fileContact, string fileAddress, string fileTelephone)
+        {
+            // Opening stream channels
+            var swContact = new StreamWriter(path + fileContact);
+            var swAddress = new StreamWriter(path + fileAddress);
+            var swTelephone = new StreamWriter(path + fileTelephone);
+
+            foreach (var item in list)
+            {
+                swContact.WriteLine(item.ToString());
+
+                swAddress.WriteLine(item.Address.ToString());
+
+                foreach (var telephone in item.TelephoneList)
+                {
+                    swTelephone.WriteLine(telephone.ToString());
+                }
+            }
+
+            // closing stream channels
+            swContact.Close();
+            swAddress.Close();
+            swTelephone.Close();
+        }
+
+        static void PrintNames(List<Contact> list)
+        {
+            foreach (var item in list)
+            {
+                Console.WriteLine($"-->{item.FullName}");
+            }
+        }
+
+        static void RemoveContact(List<Contact> list)
         {
             Console.Clear();
             Console.WriteLine("====Remove a contact====");
 
-            list.PrintNames();
+            PrintNames(list);
             Console.WriteLine("========================");
 
             string name = ReadString("Name: ");
 
-            bool result = list.RemoveByName(name);
+            Contact? aux = GetContactByName(list, name);
 
-            if (!result)
-                Console.WriteLine("There is no contact with this name!");
-            else
+            if (aux != null)
+            {
+                list.Remove(aux);
                 Console.WriteLine("Contact removed!");
+            }
+            else
+            {
+                Console.WriteLine("There is no contact with this name!");
+            }
         }
 
-        static void EditContact(ContactList list)
+        static void EditContact(List<Contact> list)
         {
             Console.Clear();
             Console.WriteLine("======Edit contact======");
 
-            list.PrintNames();
+            PrintNames(list);
             Console.WriteLine("========================");
 
             string name = ReadString("Enter name: ");
-            Contact? contact = list.GetUserByName(name);
+            Contact? contact = GetContactByName(list, name);
 
             if (contact == null)
             {
                 Console.WriteLine("There is no contact with this name!");
                 return;
             }
+
+            list.Remove(contact);
 
             bool end = false;
             while (!end)
@@ -140,44 +244,52 @@ namespace ContactsList
                         contact.Email = ReadString("New email: ");
                         break;
                     case 3: // Add new phone number
-                        Telephone newNumber = new(ReadString("New phone: "));
+                        Telephone newNumber = new(contact.Id, ReadString("New phone: "));
                         contact.TelephoneList.Add(newNumber);
                         break;
                     case 4: // Remove phone number
                         string number = ReadString("Phone number you want to remove: ");
-                        contact.TelephoneList.RemoveByNumber(number);
+                        Telephone? removed = null;
+                        foreach (var item in contact.TelephoneList)
+                        {
+                            if (item.Number.Equals(number))
+                                removed = item;
+                        }
+                        if (removed != null)
+                            contact.TelephoneList.Remove(removed);
                         break;
                     case 5: // change address
                         Address aux = CreateAddress();
+                        aux.UserId = contact.Id;
                         contact.Address = aux;
                         break;
                     case 0:
                         Console.WriteLine("Your edited contact: ");
-                        Console.WriteLine(contact);
+                        Console.WriteLine(contact.GetFullDescription());
+                        list.Add(contact);
                         end = true;
                         break;
                     default:
                         break;
                 }
             }
-
         }
 
-        static void ListContactByName(ContactList list)
+        static void ListContactByName(List<Contact> list)
         {
             Console.Clear();
             Console.WriteLine("==List Contact by name==");
 
-            list.PrintNames();
+            PrintNames(list);
             Console.WriteLine("========================");
 
             string name = ReadString("Contact name you want to find: ");
 
-            Contact? contact = list.GetUserByName(name);
+            Contact? contact = GetContactByName(list, name);
 
             if (contact != null)
             {
-                Console.WriteLine(contact);
+                Console.WriteLine(contact.GetFullDescription());
             }
             else
             {
@@ -202,6 +314,21 @@ namespace ContactsList
             string additionalAddress = ReadString("Additional Address: ");
 
             return new Address(postalCode, city, state, street, streetType, district, number, additionalAddress);
+        }
+
+        static Contact? GetContactByName(List<Contact> list, string name)
+        {
+            Contact? contact = null;
+
+            foreach (var item in list)
+            {
+                if (item.FullName.Equals(name))
+                {
+                    contact = item;
+                }
+            }
+
+            return contact;
         }
 
         static int MenuEdit()
@@ -245,6 +372,51 @@ namespace ContactsList
             }
 
             return number;
+        }
+
+        static void CreateDirectoryAndFiles(string path, string fileContact, string fileAddress, string fileTelephone)
+        {
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            if (!File.Exists(path + fileContact))
+            {
+                var file = File.Create(path + fileContact);
+                file.Close();
+            }
+
+            if (!File.Exists(path + fileAddress))
+            {
+                var file = File.Create(path + fileAddress);
+                file.Close();
+            }
+
+            if (!File.Exists(path + fileTelephone))
+            {
+                var file = File.Create(path + fileTelephone);
+                file.Close();
+            }
+        }
+
+        static void ListAllUsers(List<Contact> list)
+        {
+            Console.Clear();
+            Console.WriteLine("List:");
+            Console.WriteLine("========================");
+
+            if (list.Count == 0)
+            {
+                Console.WriteLine("List is empty!");
+            }
+            else
+            {
+                int count = 0;
+                foreach (var item in list)
+                {
+                    Console.WriteLine($"Contact {++count}:");
+                    Console.WriteLine(item.GetFullDescription());
+                }
+            }
         }
     }
 }

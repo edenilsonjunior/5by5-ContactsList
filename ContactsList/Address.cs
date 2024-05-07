@@ -8,7 +8,7 @@ namespace ContactsList
 {
     internal class Address
     {
-
+        public int UserId { get; set; }
         public string PostalCode { get; set; }
         public string City { get; set; }
         public string State { get; set; }
@@ -17,6 +17,19 @@ namespace ContactsList
         public string District { get; set; }
         public int Number { get; set; }
         public string AdditionalAddress { get; set; }
+
+        public Address(int userId, string postalCode, string city, string state, string street, string streetType, string district, int number, string additionalAddress)
+        {
+            this.UserId = userId;
+            PostalCode = postalCode;
+            City = city;
+            State = state;
+            Street = street;
+            StreetType = streetType;
+            District = district;
+            Number = number;
+            AdditionalAddress = additionalAddress;
+        }
 
         public Address(string postalCode, string city, string state, string street, string streetType, string district, int number, string additionalAddress)
         {
@@ -30,21 +43,28 @@ namespace ContactsList
             AdditionalAddress = additionalAddress;
         }
 
-        public override string? ToString()
+        public string GetFullDescription()
         {
 
-            string texto = "\n" +
-            $"\tPostal Code.......: {PostalCode}\n" +
-            $"\tCity..............: {City}\n" +
-            $"\tState.............: {State}\n" +
-            $"\tStreet............: {StreetType} {Street}\n" +
-            $"\tDistrict..........: {District}\n" +
-            $"\tNumber............: {Number}\n";
+            string text =
+             "Address:\n" +
+            $"Postal Code..: {PostalCode}\n" +
+            $"City.........: {City}\n" +
+            $"State........: {State}\n" +
+            $"Street.......: {StreetType} {Street}\n" +
+            $"District.....: {District}\n" +
+            $"Number.......: {Number}\n";
             if (AdditionalAddress != null)
             {
-                texto += $"\tAdditional Address: {AdditionalAddress}";
+                text += $"Additional: {AdditionalAddress}\n";
             }
-            return texto;
+
+            return text;
+        }
+
+        public override string? ToString()
+        {
+            return $"{UserId};{PostalCode};{City};{State};{Street};{StreetType};{District};{Number};{AdditionalAddress}";
         }
     }
 }
