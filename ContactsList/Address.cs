@@ -34,15 +34,15 @@ namespace ContactsList
         {
 
             string texto = "\n" +
-            $"Postal Code..........: {PostalCode}\n" +
-            $"City.................: {City}\n" +
-            $"State................: {State}\n" +
-            $"Street...............: {StreetType} {Street}\n" +
-            $"District.............: {District}\n" +
-            $"Number...............: {Number}\n";
+            $"\tPostal Code.......: {PostalCode}\n" +
+            $"\tCity..............: {City}\n" +
+            $"\tState.............: {State}\n" +
+            $"\tStreet............: {StreetType} {Street}\n" +
+            $"\tDistrict..........: {District}\n" +
+            $"\tNumber............: {Number}\n";
             if (AdditionalAddress != null)
             {
-                texto += $"Additional Address...: {AdditionalAddress}";
+                texto += $"\tAdditional Address: {AdditionalAddress}";
             }
             return texto;
         }

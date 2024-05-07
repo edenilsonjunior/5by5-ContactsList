@@ -1,12 +1,4 @@
-﻿using ContactsList;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
-
-namespace TelephonesList
+﻿namespace ContactsList
 {
     internal class TelephoneList
     {
@@ -111,9 +103,11 @@ namespace TelephonesList
             return false;
         }
 
-        public void Print()
+        public override string? ToString()
         {
-            Console.WriteLine("List:");
+            string text;
+
+            text = "Telephone list:\n";
 
             if (!IsEmpty())
             {
@@ -121,16 +115,19 @@ namespace TelephonesList
 
                 do
                 {
-                    Console.WriteLine($"-->{aux}");
+                    text += $"\t{aux}\n";
                     aux = aux.Next;
                 } while (aux != null);
             }
             else
             {
-                Console.WriteLine("List is empty!");
+                text += "\tTelephone list is empty!\n";
             }
-            Console.WriteLine("===================");
+            text += "========================";
+
+            return text;
         }
+
 
 
         bool IsEmpty()
