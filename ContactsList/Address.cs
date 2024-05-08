@@ -45,7 +45,6 @@ namespace ContactsList
 
         public string GetFullDescription()
         {
-
             string text =
              "Address:\n" +
             $"Postal Code..: {PostalCode}\n" +
@@ -56,7 +55,7 @@ namespace ContactsList
             $"Number.......: {Number}\n";
             if (AdditionalAddress != null)
             {
-                text += $"Additional: {AdditionalAddress}\n";
+                text += $"Additional...: {AdditionalAddress}\n";
             }
 
             return text;

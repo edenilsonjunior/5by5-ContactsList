@@ -25,27 +25,21 @@ namespace ContactsList
                 switch (option)
                 {
                     case 1:
-                        AddContact(list);
-                        break;
+                        AddContact(list); break;
                     case 2:
-                        RemoveContact(list);
-                        break;
+                        RemoveContact(list); break;
                     case 3:
-                        EditContact(list);
-                        break;
+                        EditContact(list); break;
                     case 4:
-                        ListAllUsers(list);
-                        break;
+                        ListAllUsers(list); break;
                     case 5:
-                        ListContactByName(list);
-                        break;
+                        ListContactByName(list); break;
                     case 0:
                         Console.WriteLine("Exiting...");
                         Environment.Exit(0);
                         break;
                     default:
-                        Console.WriteLine("Invalid option!");
-                        break;
+                        Console.WriteLine("Invalid option!"); break;
                 }
                 SaveData(list, path, fileContact, fileAddress, fileTelephone);
 
@@ -68,17 +62,7 @@ namespace ContactsList
             Console.WriteLine("4- List all contacts");
             Console.WriteLine("5- List a specific contact");
             Console.WriteLine("0- Exit");
-            Console.Write("R: ");
-
-            if (!int.TryParse(Console.ReadLine(), out int option))
-            {
-                Console.WriteLine("You must enter a number!");
-                Console.Write("Press any key to continue...");
-                Console.ReadKey();
-                return Menu();
-            }
-
-            return option;
+            return ReadInt("R: ", "You must enter a number!");
         }
 
         static void AddContact(List<Contact> list)
@@ -103,6 +87,7 @@ namespace ContactsList
             list.Add(aux);
             Console.WriteLine("Contact added!");
         }
+
         static List<Contact> LoadData(string path, string fileContact, string fileAddress, string fileTelephone)
         {
             List<Contact> list = new();
@@ -155,6 +140,7 @@ namespace ContactsList
             Contact.count = list.Count;
             return list;
         }
+
         static void SaveData(List<Contact> list, string path, string fileContact, string fileAddress, string fileTelephone)
         {
             // Opening stream channels
@@ -200,15 +186,13 @@ namespace ContactsList
 
             Contact? aux = GetContactByName(list, name);
 
-            if (aux != null)
-            {
-                list.Remove(aux);
-                Console.WriteLine("Contact removed!");
-            }
-            else
+            if (aux == null)
             {
                 Console.WriteLine("There is no contact with this name!");
+                return;
             }
+            list.Remove(aux);
+            Console.WriteLine("Contact removed!");
         }
 
         static void EditContact(List<Contact> list)
@@ -287,14 +271,13 @@ namespace ContactsList
 
             Contact? contact = GetContactByName(list, name);
 
-            if (contact != null)
-            {
-                Console.WriteLine(contact.GetFullDescription());
-            }
-            else
+            if (contact == null)
             {
                 Console.WriteLine("There is no contact with this name!");
+                return;
             }
+
+            Console.WriteLine(contact.GetFullDescription());
         }
 
         static Address CreateAddress()
@@ -334,7 +317,6 @@ namespace ContactsList
         static int MenuEdit()
         {
             Console.WriteLine("======Edit options======");
-
             Console.WriteLine("Options: ");
             Console.WriteLine("1- Change name");
             Console.WriteLine("2- Change email");
@@ -342,36 +324,8 @@ namespace ContactsList
             Console.WriteLine("4- Remove phone");
             Console.WriteLine("5- Change Address");
             Console.WriteLine("0- Exit");
-            Console.Write("R: ");
 
-            if (!int.TryParse(Console.ReadLine(), out int option))
-            {
-                Console.WriteLine("You must enter a number!");
-                Console.Write("Press any key to continue...");
-                Console.ReadKey();
-                return Menu();
-            }
-
-            return option;
-        }
-
-        static string ReadString(string str)
-        {
-            Console.Write(str);
-            return Console.ReadLine();
-        }
-
-        static int ReadInt(string str, string alert)
-        {
-            Console.Write(str);
-            int number;
-            while (!int.TryParse(Console.ReadLine(), out number) || number <= 0)
-            {
-                Console.WriteLine(alert);
-                Console.Write(str);
-            }
-
-            return number;
+            return ReadInt("R: ", "You must enter a number!");
         }
 
         static void CreateDirectoryAndFiles(string path, string fileContact, string fileAddress, string fileTelephone)
@@ -417,6 +371,24 @@ namespace ContactsList
                     Console.WriteLine(item.GetFullDescription());
                 }
             }
+        }
+
+        static string ReadString(string str)
+        {
+            Console.Write(str);
+            return Console.ReadLine();
+        }
+
+        static int ReadInt(string str, string alert)
+        {
+            Console.Write(str);
+            int number;
+            while (!int.TryParse(Console.ReadLine(), out number) || number < 0)
+            {
+                Console.WriteLine(alert);
+                Console.Write(str);
+            }
+            return number;
         }
     }
 }
